@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<title>Solar Monitor V7.1</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+background:black;
+color:white;
+font-family:Arial;
+text-align:center;
+}
+
+.header{
+font-size:34px;
+color:#00ffff;
+margin-top:20px;
+}
+
+.power{
+display:flex;
+justify-content:center;
+gap:220px;
+margin-top:30px;
+font-size:30px;
+}
+
+.solar{color:#00ff55}
+.house{color:#ff9900}
+
+.metrics{
+display:flex;
+justify-content:center;
+gap:200px;
+margin-top:20px;
+font-size:20px;
+}
+
+.balance{
+width:850px;
+margin:auto;
+margin-top:25px;
+border:2px solid white;
+}
+
+.balanceRow{
+display:flex;
+}
+
+.balanceCell{
+flex:1;
+padding:12px;
+font-size:18px;
+}
+
+.balanceTitle{
+border-bottom:2px solid white;
+padding:6px;
+font-weight:bold;
+}
+
+.graphs{
+width:95vw;
+max-width:1800px;
+margin:auto;
+margin-top:20px;
+}
+
+canvas{
+width:100%!important;
+height:250px!important;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">⚡ SOLAR ENERGY MONITOR</div>
+
+<div class="power">
+
+<div>
+☀<br>
+<span class="solar" id="solarW">0 W</span>
+</div>
+
+<div>
+🏠<br>
+<span class="house" id="houseW">0 W</span>
+</div>
+
+<div>
+🔌<br>
+<span id="gridW">0 W</span>
+</div>
+
+</div>
+
+<div class="metrics">
+
+<div>
+Voltage<br>
+<span id="voltage">0</span> V
+</div>
+
+<div>
+Current<br>
+<span id="current">0</span> A
+</div>
+
+</div>
+
+<div class="balance">
+
+<div class="balanceTitle">TODAY ENERGY BALANCE</div>
+
+<div class="balanceRow">
+
+<div class="balanceCell">
+Solar<br>
+<span id="solarToday">0</span> kWh
+</div>
+
+<div class="balanceCell">
+House<br>
+<span id="houseToday">0</span> kWh
+</div>
+
+<div class="balanceCell">
+Net<br>
+<span id="netToday">0</span>
+</div>
+
+<div class="balanceCell">
+Cost<br>
+<span id="costToday">0</span> ฿
+</div>
+
+</div>
+
+</div>
+
+<div class="balance">
+
+<div class="balanceTitle">REAL GRID ENERGY</div>
+
+<div class="balanceRow">
+
+<div class="balanceCell">
+Grid Use<br>
+<span id="gridUse">0</span> kWh
+</div>
+
+<div class="balanceCell">
+Real Cost<br>
+<span id="realCost">0</span> ฿
+</div>
+
+</div>
+
+</div>
+
+<div class="graphs">
+
+<canvas id="solarGraph"></canvas>
+<br>
+<canvas id="loadGraph"></canvas>
+
+</div>
+
+<script>
+
+let solarData=[]
+let loadData=[]
+
+let labels=Array.from({length:1440},(_,i)=>{
+
+let h=Math.floor(i/60)
+let m=i%60
+return h+":"+String(m).padStart(2,"0")
+
+})
+
+const solarChart=new Chart(document.getElementById("solarGraph"),{
+
+type:'line',
+
+data:{
+labels:labels,
+datasets:[{
+label:'Solar Production',
+borderColor:'#00ff55',
+data:solarData,
+tension:0.4
+}]
+},
+
+options:{
+animation:false,
+scales:{y:{min:0,max:2500}}
+}
+
+})
+
+const loadChart=new Chart(document.getElementById("loadGraph"),{
+
+type:'line',
+
+data:{
+labels:labels,
+datasets:[{
+label:'House Load',
+borderColor:'#ff9900',
+data:loadData,
+tension:0.4
+}]
+},
+
+options:{
+animation:false,
+scales:{y:{min:0,max:2500}}
+}
+
+})
+
+function update(){
+
+fetch("/power")
+
+.then(r=>r.json())
+
+.then(d=>{
+
+document.getElementById("solarW").innerText=d.solar+" W"
+document.getElementById("houseW").innerText=d.house+" W"
+
+let gridEl=document.getElementById("gridW")
+
+gridEl.innerText=d.grid+" W"
+
+if(d.grid>0){
+gridEl.style.color="#00ff55"
+}else{
+gridEl.style.color="#ff4444"
+}
+
+document.getElementById("voltage").innerText=d.voltage
+document.getElementById("current").innerText=d.current
+
+document.getElementById("solarToday").innerText=d.solarToday
+document.getElementById("houseToday").innerText=d.houseToday
+document.getElementById("netToday").innerText=d.netToday
+document.getElementById("costToday").innerText=d.costToday
+
+document.getElementById("gridUse").innerText=d.gridUse
+document.getElementById("realCost").innerText=d.realCost
+
+if(solarData.length===0){
+
+solarData=d.solarGraph
+loadData=d.loadGraph
+
+solarChart.data.datasets[0].data=solarData
+loadChart.data.datasets[0].data=loadData
+
+}
+
+let now=new Date()
+
+let i=now.getHours()*60+now.getMinutes()
+
+solarData[i]=d.solar
+loadData[i]=d.house
+
+solarChart.update('none')
+loadChart.update('none')
+
+})
+
+}
+
+setInterval(update,5000)
+
+</script>
+
+</body>
+</html>
