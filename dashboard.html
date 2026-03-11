@@ -134,7 +134,7 @@ House<br>
 
 <div class="balanceCell">
 Net<br>
-<span id="netToday">0</span>
+<span id="netToday">0</span> kWh
 </div>
 
 <div class="balanceCell">
@@ -179,10 +179,12 @@ Real Cost<br>
 let solarData=[]
 let loadData=[]
 
-let labels=Array.from({length:1440},(_,i)=>{
+let labels=Array.from({length:2880},(_,i)=>{
 
-let h=Math.floor(i/60)
-let m=i%60
+let totalSeconds=i*30
+let h=Math.floor(totalSeconds/3600)
+let m=Math.floor((totalSeconds%3600)/60)
+
 return h+":"+String(m).padStart(2,"0")
 
 })
@@ -253,10 +255,32 @@ gridEl.style.color="#ff4444"
 document.getElementById("voltage").innerText=d.voltage
 document.getElementById("current").innerText=d.current
 
-document.getElementById("solarToday").innerText=d.solarToday
-document.getElementById("houseToday").innerText=d.houseToday
-document.getElementById("netToday").innerText=d.netToday
-document.getElementById("costToday").innerText=d.costToday
+let solar=parseFloat(d.solarToday)
+let house=parseFloat(d.houseToday)
+
+let net=house-solar
+let cost=net*4.4
+
+document.getElementById("solarToday").innerText=solar.toFixed(2)
+document.getElementById("houseToday").innerText=house.toFixed(2)
+
+let netEl=document.getElementById("netToday")
+let costEl=document.getElementById("costToday")
+
+netEl.innerText=net.toFixed(2)
+costEl.innerText=cost.toFixed(2)
+
+if(net<0){
+
+netEl.style.color="#00ff55"
+costEl.style.color="#00ff55"
+
+}else{
+
+netEl.style.color="#ff4444"
+costEl.style.color="#ff4444"
+
+}
 
 document.getElementById("gridUse").innerText=d.gridUse
 document.getElementById("realCost").innerText=d.realCost
@@ -273,7 +297,7 @@ loadChart.data.datasets[0].data=loadData
 
 let now=new Date()
 
-let i=now.getHours()*60+now.getMinutes()
+let i=(now.getHours()*60+now.getMinutes())*2 + Math.floor(now.getSeconds()/30)
 
 solarData[i]=d.solar
 loadData[i]=d.house
@@ -285,7 +309,7 @@ loadChart.update('none')
 
 }
 
-setInterval(update,5000)
+setInterval(update,2000)
 
 </script>
 

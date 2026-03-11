@@ -11,6 +11,7 @@ const DEVICE_METER="eb05c25bc0a2e77f74zp0r"
 const DEVICE_SOLAR="35162172483fda634069"
 
 const RATE=4.40
+const GRAPH_POINTS=2880
 
 const context=new TuyaContext({
 baseUrl:"https://openapi.tuyaus.com",
@@ -21,8 +22,8 @@ secretKey:ACCESS_SECRET
 /* GRAPH DATA */
 
 let graphData={
-solar:new Array(1440).fill(null),
-load:new Array(1440).fill(null),
+solar:new Array(GRAPH_POINTS).fill(null),
+load:new Array(GRAPH_POINTS).fill(null),
 day:new Date().getDate()
 }
 
@@ -30,13 +31,22 @@ try{
 graphData=JSON.parse(fs.readFileSync("graph_data.json"))
 }catch{}
 
-/* MIDNIGHT ENERGY */
+/* MIDNIGHT HOUSE */
 
-let midnightData
+let midnightHouse
 try{
-midnightData=JSON.parse(fs.readFileSync("midnight_energy.json"))
+midnightHouse=JSON.parse(fs.readFileSync("midnight_energy.json"))
 }catch{
-midnightData={day:new Date().getDate(),energy:0}
+midnightHouse={day:new Date().getDate(),energy:0}
+}
+
+/* MIDNIGHT SOLAR */
+
+let midnightSolar
+try{
+midnightSolar=JSON.parse(fs.readFileSync("midnight_solar.json"))
+}catch{
+midnightSolar={day:new Date().getDate(),energy:0}
 }
 
 /* DECODE PHASE */
@@ -78,10 +88,9 @@ method:"GET"
 let power=0
 let voltage=0
 let current=0
-let energyTotal=0
-
+let houseTotal=0
 let solarPower=0
-let solarToday=0
+let solarTotal=0
 
 /* METER */
 
@@ -97,7 +106,7 @@ voltage=data.voltage
 }
 
 if(i.code==="total_forward_energy")
-energyTotal=i.value/100
+houseTotal=i.value/100
 
 })
 
@@ -111,8 +120,8 @@ solar.result.forEach(i=>{
 if(i.code==="cur_power")
 solarPower=Math.round(i.value/10)
 
-if(i.code==="today_energy")
-solarToday=i.value/100
+if(i.code==="add_ele")
+solarTotal=i.value/1000
 
 })
 
@@ -120,45 +129,52 @@ solarToday=i.value/100
 
 let today=new Date().getDate()
 
-if(today!==midnightData.day){
+if(today!==midnightHouse.day){
 
-midnightData={
+midnightHouse={
 day:today,
-energy:energyTotal
+energy:houseTotal
 }
 
-fs.writeFileSync("midnight_energy.json",JSON.stringify(midnightData))
+midnightSolar={
+day:today,
+energy:solarTotal
+}
+
+fs.writeFileSync("midnight_energy.json",JSON.stringify(midnightHouse))
+fs.writeFileSync("midnight_solar.json",JSON.stringify(midnightSolar))
 
 graphData={
-solar:new Array(1440).fill(null),
-load:new Array(1440).fill(null),
+solar:new Array(GRAPH_POINTS).fill(null),
+load:new Array(GRAPH_POINTS).fill(null),
 day:today
 }
 
 }
 
-/* HOUSE ENERGY */
+/* TODAY ENERGY */
 
-let houseToday=energyTotal-midnightData.energy
-
-/* TODAY ENERGY BALANCE */
+let houseToday=houseTotal-midnightHouse.energy
+let solarToday=solarTotal-midnightSolar.energy
 
 let netToday=houseToday-solarToday
 let costToday=netToday*RATE
 
-/* REAL GRID ENERGY */
+/* REAL GRID */
 
 let selfUse=Math.min(solarToday,houseToday)
 let gridUse=houseToday-selfUse
 let realCost=gridUse*RATE
 
-/* GRAPH SAVE */
+/* GRAPH */
 
 let now=new Date()
-let index=now.getHours()*60+now.getMinutes()
+let index=(now.getHours()*60+now.getMinutes())*2 + Math.floor(now.getSeconds()/30)
 
-graphData.solar[index]=solarPower
-graphData.load[index]=power
+const smooth=(prev,val)=>prev==null?val:prev*0.8+val*0.2
+
+graphData.solar[index]=smooth(graphData.solar[index],solarPower)
+graphData.load[index]=smooth(graphData.load[index],power)
 
 fs.writeFileSync("graph_data.json",JSON.stringify(graphData))
 
@@ -208,6 +224,7 @@ res.writeHead(200,{'Content-Type':'text/html'})
 res.end(html)
 
 return
+
 }
 
 res.writeHead(404)
@@ -215,11 +232,11 @@ res.end()
 
 })
 
-const PORT = process.env.PORT || 3000;
+const PORT=process.env.PORT||3000
 
 server.listen(PORT,()=>{
 
-console.log("⚡ Solar Monitor V7.1.1 Patch")
+console.log("⚡ Solar Monitor V7.2")
 console.log("http://localhost:"+PORT+"/dashboard.html")
 
 })
