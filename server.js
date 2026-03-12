@@ -39,10 +39,9 @@ day:getThailandTime().getDate()
 }
 
 let gridImportEnergy = 0
-let lastCalcTime = Date.now()
 
 try{
-  gridImportEnergy = JSON.parse(fs.readFileSync("grid_import.json")).energy
+gridImportEnergy = JSON.parse(fs.readFileSync("grid_import.json")).energy
 }catch{}
 
 /* MIDNIGHT HOUSE */
@@ -51,8 +50,7 @@ let midnightHouse
 try{
 midnightHouse=JSON.parse(fs.readFileSync("midnight_energy.json"))
 }catch{
-midnightHouse={day:getThailandTime().getDate(),energy:0}
-midnightSolar={day:getThailandTime().getDate(),energy:0}
+midnightHouse={day:new Date().getDate(),energy:0}
 }
 
 /* MIDNIGHT SOLAR */
@@ -157,7 +155,10 @@ energy:solarTotal
 }
 
 gridImportEnergy = 0
-fs.writeFileSync("grid_import.json",JSON.stringify({energy:0}))
+
+fs.writeFileSync("grid_import.json",JSON.stringify({
+energy:0
+}))
 
 fs.writeFileSync("midnight_energy.json",JSON.stringify(midnightHouse))
 fs.writeFileSync("midnight_solar.json",JSON.stringify(midnightSolar))
@@ -182,11 +183,7 @@ let costToday=netToday*RATE
 
 let gridImportPower = Math.max(power - solarPower , 0)
 
-const now = Date.now()
-const dt = (now - lastCalcTime) / 1000
-lastCalcTime = now
-
-gridImportEnergy += gridImportPower * dt / 3600000
+gridImportEnergy += gridImportPower * (3 / 3600000)
 
 fs.writeFileSync("grid_import.json",JSON.stringify({
   energy:gridImportEnergy
@@ -211,8 +208,8 @@ let solarWastePercent = solarPower>0
 ? ((solarWaste/solarPower)*100).toFixed(0)
 : 0
 
-let gridDependency = houseEnergyToday>0
-? ((gridImportEnergy/houseEnergyToday)*100).toFixed(0)
+let gridDependency = power>0
+? ((gridImport/power)*100).toFixed(0)
 : 0
 
 /* GRAPH */
@@ -238,13 +235,13 @@ grid:solarPower-power,
 voltage:voltage,
 current:current,
 
-solarToday:solarToday.toFixed(3),
-houseToday:houseToday.toFixed(3),
-netToday:netToday.toFixed(3),
-costToday:costToday.toFixed(3),
+solarToday:solarToday.toFixed(2),
+houseToday:houseToday.toFixed(2),
+netToday:netToday.toFixed(2),
+costToday:costToday.toFixed(2),
 
 gridUse:gridImportEnergy.toFixed(3),
-realCost:realCost.toFixed(3),
+realCost:realCost.toFixed(2),
 
 solarSelfUse:solarSelfUse,
 solarSelfUseKW:solarSelfUseKW,
