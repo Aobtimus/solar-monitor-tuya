@@ -1,3 +1,14 @@
+function getThailandTime() {
+  return new Date(
+    new Date().toLocaleString("en-US", { timeZone: "Asia/Bangkok" })
+  );
+}
+
+function getThailandDateString() {
+  const now = getThailandTime();
+  return now.toISOString().slice(0, 10);
+}
+
 const http=require("http")
 const fs=require("fs")
 const {TuyaContext}=require("@tuya/tuya-connector-nodejs")
@@ -24,11 +35,14 @@ secretKey:ACCESS_SECRET
 let graphData={
 solar:new Array(GRAPH_POINTS).fill(null),
 load:new Array(GRAPH_POINTS).fill(null),
-day:new Date().getDate()
+day:getThailandTime().getDate()
 }
 
+let gridImportEnergy = 0
+let lastCalcTime = Date.now()
+
 try{
-graphData=JSON.parse(fs.readFileSync("graph_data.json"))
+  gridImportEnergy = JSON.parse(fs.readFileSync("grid_import.json")).energy
 }catch{}
 
 /* MIDNIGHT HOUSE */
@@ -37,7 +51,8 @@ let midnightHouse
 try{
 midnightHouse=JSON.parse(fs.readFileSync("midnight_energy.json"))
 }catch{
-midnightHouse={day:new Date().getDate(),energy:0}
+midnightHouse={day:getThailandTime().getDate(),energy:0}
+midnightSolar={day:getThailandTime().getDate(),energy:0}
 }
 
 /* MIDNIGHT SOLAR */
@@ -127,7 +142,7 @@ solarTotal=i.value/1000
 
 /* MIDNIGHT RESET */
 
-let today=new Date().getDate()
+let today=getThailandTime().getDate()
 
 if(today!==midnightHouse.day){
 
@@ -140,6 +155,9 @@ midnightSolar={
 day:today,
 energy:solarTotal
 }
+
+gridImportEnergy = 0
+fs.writeFileSync("grid_import.json",JSON.stringify({energy:0}))
 
 fs.writeFileSync("midnight_energy.json",JSON.stringify(midnightHouse))
 fs.writeFileSync("midnight_solar.json",JSON.stringify(midnightSolar))
@@ -162,13 +180,44 @@ let costToday=netToday*RATE
 
 /* REAL GRID */
 
-let selfUse=Math.min(solarToday,houseToday)
-let gridUse=houseToday-selfUse
-let realCost=gridUse*RATE
+let gridImportPower = Math.max(power - solarPower , 0)
+
+const now = Date.now()
+const dt = (now - lastCalcTime) / 1000
+lastCalcTime = now
+
+gridImportEnergy += gridImportPower * dt / 3600000
+
+fs.writeFileSync("grid_import.json",JSON.stringify({
+  energy:gridImportEnergy
+}))
+
+let realCost = gridImportEnergy * RATE
+
+/* SOLAR FLOW */
+
+let solarSelfUse = Math.min(solarPower, power)
+let solarWaste = Math.max(solarPower - power, 0)
+let gridImport = Math.max(power - solarPower, 0)
+
+let solarSelfUseKW = (solarSelfUse/1000).toFixed(3)
+let solarWasteKW = (solarWaste/1000).toFixed(3)
+
+let solarEfficiency = solarPower>0
+? ((solarSelfUse/solarPower)*100).toFixed(0)
+: 0
+
+let solarWastePercent = solarPower>0
+? ((solarWaste/solarPower)*100).toFixed(0)
+: 0
+
+let gridDependency = houseEnergyToday>0
+? ((gridImportEnergy/houseEnergyToday)*100).toFixed(0)
+: 0
 
 /* GRAPH */
 
-let now=new Date()
+let now=getThailandTime()
 let index=(now.getHours()*60+now.getMinutes())*2 + Math.floor(now.getSeconds()/30)
 
 const smooth=(prev,val)=>prev==null?val:prev*0.8+val*0.2
@@ -189,13 +238,25 @@ grid:solarPower-power,
 voltage:voltage,
 current:current,
 
-solarToday:solarToday.toFixed(2),
-houseToday:houseToday.toFixed(2),
-netToday:netToday.toFixed(2),
-costToday:costToday.toFixed(2),
+solarToday:solarToday.toFixed(3),
+houseToday:houseToday.toFixed(3),
+netToday:netToday.toFixed(3),
+costToday:costToday.toFixed(3),
 
-gridUse:gridUse.toFixed(2),
-realCost:realCost.toFixed(2),
+gridUse:gridImportEnergy.toFixed(3),
+realCost:realCost.toFixed(3),
+
+solarSelfUse:solarSelfUse,
+solarSelfUseKW:solarSelfUseKW,
+
+solarWaste:solarWaste,
+solarWasteKW:solarWasteKW,
+
+solarWastePercent:solarWastePercent,
+
+solarEfficiency:solarEfficiency,
+
+gridDependency:gridDependency,
 
 solarGraph:graphData.solar,
 loadGraph:graphData.load
@@ -235,6 +296,18 @@ res.end()
 const PORT=process.env.PORT||3000
 
 server.listen(PORT,()=>{
+
+setInterval(async()=>{
+
+try{
+
+await fetch("http://localhost:"+PORT+"/power")
+
+}catch(e){
+console.log("auto poll error")
+}
+
+},3000)
 
 console.log("⚡ Solar Monitor V7.2")
 console.log("http://localhost:"+PORT+"/dashboard.html")

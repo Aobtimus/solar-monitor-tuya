@@ -9,6 +9,10 @@
 
 <style>
 
+*{
+box-sizing:border-box;
+}
+
 body{
 background:black;
 color:white;
@@ -20,6 +24,66 @@ text-align:center;
 font-size:34px;
 color:#00ffff;
 margin-top:20px;
+}
+
+.energy-box{
+width:850px;
+margin:20px auto;
+border:2px solid white;
+border-radius:10px;
+overflow:hidden;
+background:#050505;
+}
+
+.energy-title{
+padding:8px;
+font-weight:bold;
+border-bottom:1px solid #444;
+font-size:16px;
+letter-spacing:1px;
+}
+
+.energy-grid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+}
+
+.grid2{
+grid-template-columns:repeat(2,1fr);
+}
+
+.energy-cell{
+padding:14px;
+border-right:1px solid #333;
+text-align:center;
+}
+
+.energy-cell:last-child{
+border-right:none;
+}
+
+.energy-icon{
+font-size:18px;
+margin-bottom:4px;
+}
+
+.energy-label{
+font-size:13px;
+color:#aaa;
+margin-bottom:4px;
+}
+
+.energy-value{
+font-size:18px;
+font-weight:600;
+}
+
+.energy-value.net{
+color:#ff5555;
+}
+
+.energy-value.cost{
+color:#ff5555;
 }
 
 .power{
@@ -41,29 +105,147 @@ margin-top:20px;
 font-size:20px;
 }
 
-.balance{
+.energy-box{
 width:850px;
-margin:auto;
-margin-top:25px;
+margin:20px auto;
 border:2px solid white;
+border-radius:10px;
+overflow:hidden;
+background:#050505;
 }
 
-.balanceRow{
-display:flex;
-}
-
-.balanceCell{
-flex:1;
-padding:12px;
-font-size:18px;
-}
-
-.balanceTitle{
-border-bottom:2px solid white;
-padding:6px;
+.energy-title{
+padding:8px;
 font-weight:bold;
+border-bottom:1px solid #444;
+font-size:16px;
+letter-spacing:1px;
 }
 
+.energy-grid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+}
+
+.grid2{
+grid-template-columns:repeat(2,1fr);
+}
+
+.energy-cell{
+padding:14px;
+border-right:1px solid #333;
+text-align:center;
+}
+
+.energy-cell:last-child{
+border-right:none;
+}
+
+.energy-icon{
+font-size:18px;
+margin-bottom:4px;
+}
+
+.energy-label{
+font-size:13px;
+color:#aaa;
+margin-bottom:4px;
+}
+
+.energy-value{
+font-size:18px;
+font-weight:600;
+}
+
+.energy-value.net{
+color:#ff5555;
+}
+
+.energy-value.cost{
+color:#ff5555;
+}
+
+.solar-stats{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+width:850px;
+margin:20px auto;
+border:2px solid white;
+border-radius:10px;
+overflow:hidden;
+background:#050505;
+}
+
+.stat{
+padding:14px;
+border-right:1px solid #333;
+text-align:center;
+}
+
+.stat:last-child{
+border-right:none;
+}
+
+.title{
+font-weight:bold;
+margin-bottom:6px;
+}
+
+.th{
+font-size:12px;
+color:#aaa;
+margin-bottom:6px;
+}
+
+.value{
+font-size:15px;
+font-weight:500;
+}
+
+.solar-stats{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+width:850px;
+margin:20px auto;
+border:2px solid white;
+border-radius:8px;
+overflow:hidden;
+box-shadow:0 0 10px rgba(255,255,255,0.1);
+}
+
+.stat{
+    padding:12px 16px;
+    border-right:1px solid #444;
+    text-align:center;
+}
+
+.stat:last-child{
+    border-right:none;
+}
+
+.stat{
+padding:12px 16px;
+border-right:1px solid #444;
+}
+
+.stat:last-child{
+border-right:none;
+}
+
+.title{
+font-weight:600;
+margin-bottom:4px;
+}
+
+.th{
+font-size:12px;
+color:#aaa;
+margin-bottom:6px;
+}
+
+.value{
+font-size:14px;
+}
 .graphs{
 width:95vw;
 max-width:1800px;
@@ -116,52 +298,96 @@ Current<br>
 
 </div>
 
-<div class="balance">
+<div class="energy-box">
 
-<div class="balanceTitle">TODAY ENERGY BALANCE</div>
+<div class="energy-title">📊 TODAY ENERGY BALANCE</div>
 
-<div class="balanceRow">
+<div class="energy-grid">
 
-<div class="balanceCell">
-Solar<br>
+<div class="energy-cell">
+<div class="energy-icon">☀️</div>
+<div class="energy-label">Solar</div>
+<div class="energy-value">
 <span id="solarToday">0</span> kWh
 </div>
+</div>
 
-<div class="balanceCell">
-House<br>
+<div class="energy-cell">
+<div class="energy-icon">🏠</div>
+<div class="energy-label">House</div>
+<div class="energy-value">
 <span id="houseToday">0</span> kWh
 </div>
+</div>
 
-<div class="balanceCell">
-Net<br>
+<div class="energy-cell">
+<div class="energy-icon">📉</div>
+<div class="energy-label">Net</div>
+<div class="energy-value net">
 <span id="netToday">0</span> kWh
 </div>
+</div>
 
-<div class="balanceCell">
-Cost<br>
+<div class="energy-cell">
+<div class="energy-icon">💰</div>
+<div class="energy-label">Cost</div>
+<div class="energy-value cost">
 <span id="costToday">0</span> ฿
 </div>
-
 </div>
 
 </div>
+</div>
 
-<div class="balance">
+<div class="energy-box">
 
-<div class="balanceTitle">REAL GRID ENERGY</div>
+<div class="energy-title">⚡ REAL GRID ENERGY</div>
 
-<div class="balanceRow">
+<div class="energy-grid grid2">
 
-<div class="balanceCell">
-Grid Use<br>
+<div class="energy-cell">
+<div class="energy-icon">🔌</div>
+<div class="energy-label">Grid Use</div>
+<div class="energy-value">
 <span id="gridUse">0</span> kWh
 </div>
-
-<div class="balanceCell">
-Real Cost<br>
-<span id="realCost">0</span> ฿
 </div>
 
+<div class="energy-cell">
+<div class="energy-icon">💵</div>
+<div class="energy-label">Real Cost</div>
+<div class="energy-value">
+<span id="realCost">0</span> ฿
+</div>
+</div>
+
+</div>
+</div>
+
+<div class="solar-stats">
+
+<div class="stat">
+<div class="title">☀️ Solar Self-Use</div>
+<div class="th">พลังงานโซลาร์ที่ใช้ในบ้าน</div>
+<div class="value" id="selfUse"></div>
+</div>
+
+<div class="stat">
+<div class="title">⚡ Solar Waste</div>
+<div class="th">พลังงานโซลาร์ส่วนเกิน</div>
+<div class="value" id="solarWaste"></div>
+</div>
+
+<div class="stat">
+<div class="title">📊 Solar Efficiency</div>
+<div class="th">ประสิทธิภาพการใช้โซลาร์</div>
+<div class="value" id="solarEff"></div>
+</div>
+
+<div class="stat">
+<div class="title">🏭 Grid Dependency</div>
+<div class="th">สัดส่วนการพึ่งพาไฟจากการไฟฟ้า</div>
+<div class="value" id="gridDep"></div>
 </div>
 
 </div>
@@ -261,14 +487,14 @@ let house=parseFloat(d.houseToday)
 let net=house-solar
 let cost=net*4.4
 
-document.getElementById("solarToday").innerText=solar.toFixed(2)
-document.getElementById("houseToday").innerText=house.toFixed(2)
+document.getElementById("solarToday").innerText=solar.toFixed(3)
+document.getElementById("houseToday").innerText=house.toFixed(3)
 
 let netEl=document.getElementById("netToday")
 let costEl=document.getElementById("costToday")
 
-netEl.innerText=net.toFixed(2)
-costEl.innerText=cost.toFixed(2)
+netEl.innerText=net.toFixed(3)
+costEl.innerText=cost.toFixed(3)
 
 if(net<0){
 
@@ -284,6 +510,18 @@ costEl.style.color="#ff4444"
 
 document.getElementById("gridUse").innerText=d.gridUse
 document.getElementById("realCost").innerText=d.realCost
+
+document.getElementById("selfUse").innerText =
+d.solarSelfUse+" W | "+d.solarSelfUseKW+" kW | "+d.solarEfficiency+" %"
+
+document.getElementById("solarWaste").innerText =
+d.solarWaste+" W | "+d.solarWasteKW+" kW | "+d.solarWastePercent+" %"
+
+document.getElementById("solarEff").innerText =
+d.solarEfficiency+" %"
+
+document.getElementById("gridDep").innerText =
+d.gridDependency+" %"
 
 if(solarData.length===0){
 
@@ -312,6 +550,5 @@ loadChart.update('none')
 setInterval(update,2000)
 
 </script>
-
 </body>
 </html>
