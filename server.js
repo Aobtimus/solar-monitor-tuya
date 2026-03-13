@@ -107,6 +107,10 @@ let solarTotal=0
 
 /* METER */
 
+/* METER */
+
+if(!meter || !meter.result) meter={result:[]}
+
 meter.result.forEach(i=>{
 
 if(i.code==="phase_a"){
@@ -127,6 +131,8 @@ if(voltage>0)
 current=(power/voltage).toFixed(2)
 
 /* SOLAR */
+
+if(!solar || !solar.result) solar={result:[]}
 
 solar.result.forEach(i=>{
 
